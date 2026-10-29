@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Fire seed">
+  <defs>
+    <linearGradient id="fs-flame" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#EA580C"/>
+      <stop offset="0.55" stop-color="#F97316"/>
+      <stop offset="1" stop-color="#FBBF24"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#fs-flame)" d="M32 6c4 10 14 14 14 26 0 8.8-6.3 15-14 15s-14-6.2-14-15c0-8 6-12 9-20 1.5 4 3 5 4 4 1.5-1.5.5-6 1-10z"/>
+  <path fill="#FFF7ED" fill-opacity="0.92" d="M32 26c2 4 6 6 6 10 0 4-2.7 6.5-6 6.5S26 40 26 36c0-3 3-5 6-10z"/>
+</svg>

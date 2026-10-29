@@ -1,0 +1,7 @@
+# dsh-constitution-seed · plugin bundle patch
+- insert:
+    - id: dsh-constitution-seed
+      name: 'dsh-constitution-seed'
+      config:
+        enabled: true
+        tool: true

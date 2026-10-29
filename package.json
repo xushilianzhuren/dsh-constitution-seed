@@ -1,0 +1,36 @@
+{
+  "name": "dsh-constitution-seed",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "description": "Constitution-seed injector: seeds every new session with bounded excerpts (plus a manifest with hashes) of your workspace rule files, deduped by content hash. 每个新会话开局自动注入工作区规则文件的有界摘录与哈希清单（幂等·按内容判重）。",
+  "license": "MIT",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "agent",
+    "ai-agent"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@antinomyhq/forge": "*"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "dsh-constitution-seed",
+    "description": "每个新会话开局自动注入工作区规则文件（AGENTS.md / SOUL.md / USER.md 等可配）的有界摘录与哈希清单：注入为 user 消息（非 system prompt），幂等判重，文件变更自动重推。解决原生 instructionFileCandidates 整文件预算下\"大文件全被丢\"的问题。"
+  }
+}
