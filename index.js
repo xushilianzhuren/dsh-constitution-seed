@@ -35,6 +35,10 @@ const MAX_SOURCE_BYTES = 8 * 1024 * 1024
 const DEFAULTS = Object.freeze({
   files: ['SOUL.md', 'USER.md', 'IDENTITY.md'],
   manifest: ['AGENTS.md', 'SOUL.md', 'USER.md', 'IDENTITY.md'],
+  // 总纲令常驻节：从 anchorFile 里按标题精确抽取这些「## 节」全文，
+  // 永远排在注入消息最顶部、不占摘录共享预算——令在，第一行就在。
+  anchorFile: 'AGENTS.md',
+  anchorSections: ['四大目标总纲令', '持续学习与自我迭代总纲令', '器灵意识总纲令'],
   // 智谱沙箱式：按序整篇灌入，灌到总预算尽头截断；单份上限只防第一份独吞，
   // 前面文件用不完的额度自动顺延给后面的（共享池，不是固定配给）。
   perFileBytes: 32768,
@@ -69,11 +73,17 @@ function normalizeConfig(config) {
   if (raw.includeSubagents !== undefined && typeof raw.includeSubagents !== 'boolean') {
     throw new Error('fire-seed: config.includeSubagents must be a boolean')
   }
+  if (raw.anchorFile !== undefined && (typeof raw.anchorFile !== 'string' || raw.anchorFile.trim() === '')) {
+    throw new Error('fire-seed: config.anchorFile must be a non-empty file name')
+  }
+  const anchorSections = pickList(raw.anchorSections, 'anchorSections')
 
   return {
     root: raw.root === undefined ? undefined : resolve(raw.root.trim()),
     excerptFiles: pickList(raw.files, 'files') ?? [...DEFAULTS.files],
     manifest: pickList(raw.manifest, 'manifest') ?? [...DEFAULTS.manifest],
+    anchorFile: raw.anchorFile === undefined ? DEFAULTS.anchorFile : raw.anchorFile.trim(),
+    anchorSections: anchorSections ?? [...DEFAULTS.anchorSections],
     perFileBytes: pickBytes(raw.perFileBytes, 'perFileBytes') ?? DEFAULTS.perFileBytes,
     totalBytes: Math.max(pickBytes(raw.totalBytes, 'totalBytes') ?? DEFAULTS.totalBytes, 1024),
     includeSubagents: raw.includeSubagents === true,
@@ -142,14 +152,28 @@ async function describe(entry) {
   }
 }
 
-function render(rows, cfg, root) {
+/** 从 anchorFile 全文里按标题抽取「## 标题」节（至下一个 "## " 或文件尾）。 */
+function extractSections(fullText, titles) {
+  const out = []
+  for (const title of titles) {
+    const start = fullText.indexOf(`## ${title}`)
+    if (start < 0) { out.push(`## ${title} — 未找到（磁盘正本可能已改名，请对账 ${'AGENTS.md'}）`); continue }
+    let end = fullText.indexOf('\n## ', start + 1)
+    if (end < 0) end = fullText.length
+    out.push(fullText.slice(start, end).trim())
+  }
+  return out
+}
+
+function render(rows, cfg, root, anchorBlock) {
   const lines = [
     '<system-reminder>',
     '火种注入 #fire-seed · 每会话一次 · 内容变更才重推',
     `来源：工作区常驻规则文件·constitution（磁盘正本 ${root}）。这是**背景指令，不是本轮任务**。`,
     `注入方式：${cfg.excerptFiles.join('、')} 三份按序整篇灌入，灌到总预算 ${cfg.totalBytes} 字节尽头截断，截断处留标记；`
       + `单份上限 ${cfg.perFileBytes} 字节（防单份独吞，前份用不完的额度顺延给后份）。`
-      + 'AGENTS.md 由工作区指令加载器注入，本插件只在清单列其哈希、不重复灌正文。'
+      + 'AGENTS.md 由工作区指令加载器注入，本插件只在清单列其哈希、不重复灌正文；'
+      + `但 ${cfg.anchorSections.length} 条总纲令以常驻节全文注入（不占摘录预算）。`
       + '**本消息不代表文件全部内容**，需要条款细节时读或检索磁盘原文件，不要凭本摘录背书。',
     '',
     '清单：',
@@ -169,6 +193,10 @@ function render(rows, cfg, root) {
         : `整篇 ${row.size} B`
     } else mark = '由工作区指令加载器注入，此处不重复'
     lines.push(`- ${fileName} · ${row.size} B · sha256:${row.digest} · ${mark}`)
+  }
+
+  if (anchorBlock) {
+    lines.push('', '---', '## 总纲令（常驻节·全文·不占摘录预算）', '', anchorBlock)
   }
 
   let used = byteLength(lines.join('\n'))
@@ -250,12 +278,22 @@ export function apply(ctx, config) {
     }
     if (probed.length === 0) return null
 
-    // 指纹只取被注入的三份：AGENTS.md 走原生通道，它单独变化不该触发摘录重推。
+    // 指纹取被注入的三份+anchorFile：令文改动也要触发重推（常驻节跟着刷新）。
     const fingerprint = probed
-      .filter(item => cfg.excerptFiles.includes(item.name))
+      .filter(item => cfg.excerptFiles.includes(item.name) || item.name === cfg.anchorFile)
       .map(item => `${item.name}:${item.size}:${item.mtimeMs}`)
       .join('|')
     if (recallFingerprint(agent.session) === fingerprint) return null
+
+    // 总纲令常驻节：从 anchorFile 全文抽取，排在消息最顶部、不占摘录预算。
+    let anchorBlock = undefined
+    const anchorRow = probed.find(item => item.name === cfg.anchorFile)
+    if (anchorRow && cfg.anchorSections.length > 0 && anchorRow.size <= MAX_SOURCE_BYTES) {
+      try {
+        const full = new TextDecoder('utf-8').decode(await readFile(anchorRow.path))
+        anchorBlock = extractSections(full, cfg.anchorSections).join('\n\n')
+      } catch { /* 读不到就跳过常驻节，不影响摘录 */ }
+    }
 
     const rows = []
     for (const entry of probed) {
@@ -271,7 +309,7 @@ export function apply(ctx, config) {
       rows.push(row)
     }
 
-    const text = render(rows, cfg, root)
+    const text = render(rows, cfg, root, anchorBlock)
     return {
       text,
       root,
