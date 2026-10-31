@@ -1,0 +1,20 @@
+# 火种注入器：把工作区常驻宪法文件的有界摘录注入每个新会话。
+# AGENTS.md 仍由原生 agent-instructions 通道负责；此处补 SOUL/USER/IDENTITY。
+# 智谱沙箱式：三份按序整篇灌入、共享总预算、预算尽头截断留标记；单份上限只防单份独吞。
+- insert:
+    - id: fire-seed
+      name: 'dsh-fire-seed'
+      config:
+        root: ~//Smart Agentharness
+        files:
+          - SOUL.md
+          - USER.md
+          - IDENTITY.md
+        manifest:
+          - AGENTS.md
+          - SOUL.md
+          - USER.md
+          - IDENTITY.md
+        perFileBytes: 32768
+        totalBytes: 131072
+        includeSubagents: false

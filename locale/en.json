@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Fire Seed Injector",
+    "description": "Injects bounded excerpts of the workspace constitution files (SOUL, USER, IDENTITY) into every new session, plus a manifest with sizes and hashes; full text stays on disk."
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "dsh-constitution-seed",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "description": "Injects bounded excerpts of the workspace's persistent constitution files into every new session.",
+  "license": "MIT",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
